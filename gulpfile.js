@@ -11,9 +11,9 @@ var LessPluginCleanCSS = require("less-plugin-clean-css"),
     cleancss = new LessPluginCleanCSS({advanced: true});
 
 var LessPluginAutoPrefix = require('less-plugin-autoprefix'),
-    autoprefix= new LessPluginAutoPrefix({browsers: ["last 2 versions"]});
+    autoprefix = new LessPluginAutoPrefix({browsers: ["last 2 versions"]});
 
-gulp.task('css:big', function() {
+gulp.task('css:big', function () {
     return gulp.src('src/picker.less')
         .pipe(plugins.less({
             plugins: [autoprefix]
@@ -24,7 +24,7 @@ gulp.task('css:big', function() {
         .pipe(plugins.notify('CSS build finished'));
 });
 
-gulp.task('css:min', function() {
+gulp.task('css:min', function () {
     return gulp.src('src/picker.less')
         .pipe(plugins.less({
             plugins: [autoprefix, cleancss]
@@ -35,42 +35,43 @@ gulp.task('css:min', function() {
         .pipe(plugins.notify('CSS:min build finished'));
 });
 
-gulp.task('js:min', function() {
+gulp.task('js:min', function () {
     return gulp.src('src/picker.js')
         .pipe(plugins.uglify())
         .pipe(plugins.rename('picker.min.js'))
         .pipe(gulp.dest('dist/'));
 });
 
-gulp.task('doc:js', function() {
-    var libs = gulp.src(mainBowerFiles({'includeDev': true}))
-        .pipe(plugins.ignore.include('*.js'))
-        .on('error', plugins.notify.onError("Error: <%= error.file %> <%= error.message %>"))
+gulp.task('doc:js', function () {
+    var libs = gulp.src(mainBowerFiles('**/*.js', {'includeDev': true}))
         .pipe(plugins.concat('libs.js'))
         .pipe(plugins.uglify())
-        .pipe(gulp.dest('doc/js/'));
+        .on('error', function (err) {
+            console.log(err)
+        })
+        .pipe(gulp.dest('docs/js/'));
 
     var src = gulp.src('src/picker.js')
-        .pipe(gulp.dest('doc/js/'));
+        .pipe(gulp.dest('docs/js/'));
 
     return merge(libs, src)
+        .on('error', plugins.notify.onError("Error: <%= error.file %> <%= error.message %>"))
         .pipe(plugins.notify('JS done!'));
 });
 
-gulp.task('doc:css', function() {
-    var files = mainBowerFiles({'includeDev': true});
+gulp.task('doc:css', function () {
+    var files = mainBowerFiles('**/*.css', {'includeDev': true});
     files.push('dist/picker.css');
 
-    return gulp.src('doc/css/main.less')
+    return gulp.src('docs/css/main.less')
         .pipe(plugins.less({
             plugins: [autoprefix, cleancss]
         }))
         .pipe(plugins.addSrc.prepend(files))
-        .pipe(plugins.ignore.include('*.css'))
         .pipe(plugins.minifyCss())
         .on('error', plugins.notify.onError("Error: <%= error.file %> <%= error.message %>"))
         .pipe(plugins.concat('main.css'))
-        .pipe(gulp.dest('doc/css/'))
+        .pipe(gulp.dest('docs/css/'))
         .pipe(plugins.notify('Doc:css build finished'));
 });
 
@@ -80,10 +81,10 @@ gulp.task('doc', ['doc:css', 'doc:js']);
 gulp.task('build', ['doc', 'css', 'js:min']);
 
 gulp.task('doc:watch', ['doc'], function () {
-    gulp.watch('doc/css/main.less', ['doc:css']);
+    gulp.watch('docs/css/main.less', ['doc:css']);
     gulp.watch('src/picker.js', ['doc:js']);
 });
 
-gulp.task('default', ['build'], function() {
+gulp.task('default', ['build'], function () {
     gulp.watch('src/picker.less', ['css:big']);
 });
